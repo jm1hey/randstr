@@ -1,0 +1,318 @@
+#!/bin/bash
+
+# Copyright (c) 2020 jm1hey
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# Version
+script_version="1.4"
+
+# The purpose of this script is described in the 'printhelp' function defined below.
+
+# define command name -- must be the same as the script file name
+cmdname="randstr"
+
+# define usage and help functions
+function printusage {
+	printf "\nUsage: %s [OPTION(s)]\n\n" "$cmdname"
+	printf "Options:\n"
+	printf "\t--help\n"
+	printf "\t\tPrint help information and exit\n\n"
+	printf "\t--version\n"
+	printf "\t\tPrint version information and exit\n\n"
+	printf "\t-l, --length [length in characters of each string]\n"
+	printf "\t\tDefault: 15\n\n"
+	printf "\t-n, --number [number of strings to produce]\n"
+	printf "\t\tDefault: 1\n"
+	printf "\t\tNote: producing many strings (n > 1000) may take a while.\n\n"
+	printf "\t-d, --delimiter [s, space | l, line]\n"
+	printf "\t\tChoose how to separate strings\n"
+	printf "\t\tDefault: space\n\n"
+	printf "\t-t, --type [a, alpha | n, numeric | an, alphanumeric]\n"
+	printf "\t\tWhether to print alphabetical and/or numeric characters\n"
+	printf "\t\tDefault: alphanumeric\n\n"
+	printf "\t-c, --case [u, upper | l, lower | b, both]\n"
+	printf "\t\tWhether to print uppercase and/or lowercase characters\n"
+	printf "\t\tDefault: both\n\n"
+}
+
+function printhelp {
+	printf "\n'%s'%s%s%s\n" "$cmdname" " is a Bash script that prints random" \
+		" alphanumeric character strings. It uses only commands that are" \
+		" commonly included in Unix-like systems."
+	printusage
+}
+
+function printversion {
+	echo "$script_version"
+}
+
+# check for "--help" argument
+for i in "$@"
+do
+	if [ "$i" == "--help" ]
+	then
+		printhelp
+		exit 0
+	fi
+done
+
+# check for "--version" argument
+for i in "$@"
+do
+	if [ "$i" == "--version" ]
+	then
+		printversion
+		exit 0
+	fi
+done
+
+# check for 'tr'
+which tr > /dev/null
+if [ $? != 0 ]
+then
+	echo "Error: 'tr' not found"
+	exit 1
+fi
+printf "\xFF" | tr -dc "A-Za-z0-9" > /dev/null 2>&1
+if [ $? != 0 ]
+then
+	echo "Error: unsupported version of 'tr' installed"
+	exit 1
+fi
+
+# options will be kept at default values if not set by user
+length_set="0"
+number_set="0"
+delimiter_set="0"
+type_set="0"
+alpha_case_set="0"
+
+i=1
+for arg in "$@"
+do
+	# assume for now that all arguments are invalid
+	argvalid[$i]=0
+	i=$((i+1))
+done
+
+num_i=1
+i_next=2
+for arg in "$@"
+do
+	if [ "$arg" == "-l" ] || [ "$arg" == "--length" ]
+	then
+		if [ "$length_set" == "1" ]
+		then
+			echo "Error: do not set the same option more than once"
+			exit 1
+		elif [ -z "${!i_next}" ]
+		then
+			printf "%s\"%s\"\n" "Error: missing argument for option " "$arg"
+			exit 1
+		elif [ "${!i_next:0:1}" == "-" ]
+		then
+			printf "%s\"%s\"%s\n" "Error: argument for option " "$arg" " must be a positive integer"
+			exit 1
+		elif ! [[ "${!i_next}" =~ ^[0-9]+$ ]]
+		then
+			printf "%s\"%s\"%s\n" "Error: argument for option " "$arg" " must be a positive integer"
+			exit 1
+		else
+			length="${!i_next}"
+			length_set=1
+			argvalid[$num_i]=1
+			argvalid[$i_next]=1
+		fi
+	elif [ "$arg" == "-n" ] || [ "$arg" == "--number" ]
+	then
+		if [ "$number_set" == "1" ]
+		then
+			echo "Error: do not set the same option more than once"
+			exit 1
+		elif [ -z "${!i_next}" ]
+		then
+			printf "%s\"%s\"\n" "Error: missing argument for option " "$arg"
+			exit 1
+		elif [ "${!i_next:0:1}" == "-" ]
+		then
+			printf "%s\"%s\"%s\n" "Error: argument for option " "$arg" " must be a positive integer"
+			exit 1
+		elif ! [[ "${!i_next}" =~ ^[0-9]+$ ]]
+		then
+			printf "%s\"%s\"%s\n" "Error: argument for option " "$arg" " must be a positive integer"
+			exit 1
+		else
+			number="${!i_next}"
+			number_set=1
+			argvalid[$num_i]=1
+			argvalid[$i_next]=1
+		fi
+	elif [ "$arg" == "-d" ] || [ "$arg" == "--delimiter" ]
+	then
+		if [ "$delimiter_set" == "1" ]
+		then
+			echo "Error: do not set the same option more than once"
+			exit 1
+		elif [ -z "${!i_next}" ]
+		then
+			printf "%s\"%s\"\n" "Error: missing argument for option " "$arg"
+			exit 1
+		elif [ "${!i_next}" != "s" ] && [ "${!i_next}" != "space" ] && [ "${!i_next}" != "l" ] && [ "${!i_next}" != "line" ]
+		then
+			printf "%s\"%s\"\n" "Error: invalid argument for option " "$arg"
+			exit 1
+		else
+			if [ "${!i_next}" == "s" ] || [ "${!i_next}" == "space" ]
+			then
+				delimiter=" "
+			elif [ "${!i_next}" == "l" ] || [ "${!i_next}" == "line" ]
+			then
+				delimiter="\n"
+			fi
+			delimiter_set=1
+			argvalid[$num_i]=1
+			argvalid[$i_next]=1
+		fi
+	elif [ "$arg" == "-t" ] || [ "$arg" == "--type" ]
+	then
+		if [ "$type_set" == "1" ]
+		then
+			echo "Error: do not set the same option more than once"
+			exit 1
+		elif [ -z "${!i_next}" ]
+		then
+			printf "%s\"%s\"\n" "Error: missing argument for option " "$arg"
+			exit 1
+		elif [ "${!i_next}" != "a" ] && [ "${!i_next}" != "alpha" ] &&
+			[ "${!i_next}" != "n" ] && [ "${!i_next}" != "numeric" ] &&
+			[ "${!i_next}" != "an" ] && [ "${!i_next}" != "alphanumeric" ]
+		then
+			printf "%s\"%s\"\n" "Error: invalid argument for option " "$arg"
+			exit 1
+		else
+			if [ "${!i_next}" == "a" ] || [ "${!i_next}" == "alpha" ]
+			then
+				type="alpha"
+			elif [ "${!i_next}" == "n" ] || [ "${!i_next}" == "numeric" ]
+			then
+				type="numeric"
+			elif [ "${!i_next}" == "an" ] || [ "${!i_next}" == "alphanumeric" ]
+			then
+				type="alphanumeric"
+			fi
+			type_set=1
+			argvalid[$num_i]=1
+			argvalid[$i_next]=1
+		fi
+	elif [ "$arg" == "-c" ] || [ "$arg" == "--case" ]
+	then
+		if [ "$alpha_case_set" == "1" ]
+		then
+			echo "Error: do not set the same option more than once"
+			exit 1
+		elif [ -z "${!i_next}" ]
+		then
+			printf "%s\"%s\"\n" "Error: missing argument for option " "$arg"
+			exit 1
+		elif [ "${!i_next}" != "u" ] && [ "${!i_next}" != "upper" ] &&
+			[ "${!i_next}" != "l" ] && [ "${!i_next}" != "lower" ] &&
+			[ "${!i_next}" != "b" ] && [ "${!i_next}" != "both" ]
+		then
+			printf "%s\"%s\"\n" "Error: invalid argument for option " "$arg"
+			exit 1
+		else
+			if [ "${!i_next}" == "u" ] || [ "${!i_next}" == "upper" ]
+			then
+				alpha_case="upper"
+			elif [ "${!i_next}" == "l" ] || [ "${!i_next}" == "lower" ]
+			then
+				alpha_case="lower"
+			elif [ "${!i_next}" == "b" ] || [ "${!i_next}" == "both" ]
+			then
+				alpha_case="both"
+			fi
+			alpha_case_set=1
+			argvalid[$num_i]=1
+			argvalid[$i_next]=1
+		fi
+	fi
+	num_i=$((num_i+1))
+	i_next=$((i_next+1))
+done
+
+# reject any unrecognized arguments
+num_i=1
+for arg in "$@"
+do
+	if [ "${argvalid[$num_i]}" != "1" ]
+	then
+		printf "%s\"%s\"\n" "Error: unrecognized argument: " "$arg"
+		exit 1
+	fi
+	num_i=$((num_i+1))
+done
+
+# set any unset arguments to their default values
+if [ "$length_set" == "0" ]
+then
+	length=15
+fi
+if [ "$number_set" == "0" ]
+then
+	number=1
+fi
+if [ "$delimiter_set" == "0" ]
+then
+	delimiter=" "
+fi
+if [ "$type_set" == "0" ]
+then
+	type="alphanumeric"
+fi
+if [ "$alpha_case_set" == "0" ]
+then
+	alpha_case="both"
+fi
+
+# set character set
+if [ "$type" == "alpha" ]
+then
+	if [ "$alpha_case" == "upper" ]
+	then
+		charset="A-Z"
+	elif [ "$alpha_case" == "lower" ]
+	then
+		charset="a-z"
+	else
+		charset="A-Za-z"
+	fi
+elif [ "$type" == "numeric" ]
+then
+	charset="0-9"
+else
+	if [ "$alpha_case" == "upper" ]
+	then
+		charset="A-Z0-9"
+	elif [ "$alpha_case" == "lower" ]
+	then
+		charset="a-z0-9"
+	else
+		charset="A-Za-z0-9"
+	fi
+fi
+
+# print random strings
+i=1
+while [ "$i" -lt "$number" ]
+do
+	tr -dc "$charset" </dev/urandom | head -c "$length"
+	printf "$delimiter"
+	i=$((i+1))
+done
+tr -dc "$charset" </dev/urandom | head -c "$length"
+printf "\n"
