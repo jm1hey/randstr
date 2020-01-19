@@ -9,41 +9,50 @@
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 # Version
-script_version="1.4"
+script_version="1.4+"
 
 # The purpose of this script is described in the 'printhelp' function defined below.
 
-# define command name -- must be the same as the script file name
+# define command name -- this should be the same as the script file name
 cmdname="randstr"
 
 # define usage and help functions
 function printusage {
-	printf "\nUsage: %s [OPTION(s)]\n\n" "$cmdname"
-	printf "Options:\n"
-	printf "\t--help\n"
-	printf "\t\tPrint help information and exit\n\n"
-	printf "\t--version\n"
-	printf "\t\tPrint version information and exit\n\n"
-	printf "\t-l, --length [length in characters of each string]\n"
-	printf "\t\tDefault: 15\n\n"
-	printf "\t-n, --number [number of strings to produce]\n"
-	printf "\t\tDefault: 1\n"
-	printf "\t\tNote: producing many strings (n > 1000) may take a while.\n\n"
-	printf "\t-d, --delimiter [s, space | l, line]\n"
-	printf "\t\tChoose how to separate strings\n"
-	printf "\t\tDefault: space\n\n"
-	printf "\t-t, --type [a, alpha | n, numeric | an, alphanumeric]\n"
-	printf "\t\tWhether to print alphabetical and/or numeric characters\n"
-	printf "\t\tDefault: alphanumeric\n\n"
-	printf "\t-c, --case [u, upper | l, lower | b, both]\n"
-	printf "\t\tWhether to print uppercase and/or lowercase characters\n"
-	printf "\t\tDefault: both\n\n"
+	echo \
+"
+Usage: $cmdname [OPTION(s)]
+
+Options:
+	--help
+		Print help information and exit
+
+	--version
+		Print version information and exit
+
+	(--length | -l) [LENGTH IN CHARACTERS OF EACH STRING]
+		Default: 15
+
+	(--number | -n) [NUMBER OF STRINGS TO PRODUCE]
+		Default: 1
+
+	(--delimiter | -d) [(space | s) | (line | l)]
+		Default: space
+	
+	(--type | -t) [(alpha | a) | (numeric | n) | (alphanumeric | an)]
+		Default: alphanumeric
+	
+	(--case | -c) [(upper | u) | (lower | l) | (both | b)]
+		Default: both
+
+"
 }
 
 function printhelp {
-	printf "\n'%s'%s%s%s\n" "$cmdname" " is a Bash script that prints random" \
-		" alphanumeric character strings. It uses only commands that are" \
-		" commonly included in Unix-like systems."
+	echo \
+"
+$cmdname is a Bash script that prints random alphanumeric
+character strings. It uses only commands that are commonly
+included in Unix-like systems."
 	printusage
 }
 
